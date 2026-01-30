@@ -62,17 +62,23 @@ def list_currencies(request):
 
 @csrf_exempt
 def fetch_currencies(request):
+
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
+
+    date_param = request.GET.get("date")
 
     date_param = request.GET.get("date")
     if date_param:
         url = f"https://api.nbp.pl/api/exchangerates/tables/A/{date_param}/?format=json"
     else:
         url = "https://api.nbp.pl/api/exchangerates/tables/A/?format=json"
+    
 
     try:
         resp = requests.get(url, timeout=10)
+        print('NBP status:', resp.status_code, flush=True)
+        print('NBP text:', resp.text, flush=True)
     except requests.Timeout as exc:
         return JsonResponse({"error": f"NBP request timed out: {exc}"}, status=502)
     except requests.RequestException as exc:
@@ -140,7 +146,7 @@ def rates_summary(request):
         .annotate(period=trunc_expr)
         .values("period", "code", "currency")
         .order_by("period", "code")
-        .annotate(avg_rate=Max("rate"))  # używamy Max, zgodnie z testem
+        .annotate(avg_rate=Max("rate"))
     )
 
     result = {}

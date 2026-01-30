@@ -12,6 +12,6 @@ urlpatterns = [
     # Currencies (aliasy do powyższych)
     path("currencies/", views.list_currencies, name="list_currencies"),         # GET lista kodów
     path("currencies/latest/", views.latest_rates, name="currencies_latest"),   # alias do najnowszych kursów
-    path("currencies/<date_str>/", views.rates_by_date, name="rates_by_date"),  # GET konkretna data
     path("currencies/fetch/", views.fetch_currencies, name="fetch_currencies"), # POST pobierz z NBP (csrf_exempt)
+    path("currencies/<date_str>/", views.rates_by_date, name="rates_by_date"),  # GET konkretna data
 ]

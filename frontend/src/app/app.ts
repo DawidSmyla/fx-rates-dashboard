@@ -22,6 +22,7 @@ export class AppComponent {
   constructor(private rates: RatesService) {}
 
   fetchFromNbp() {
+    console.log('fetchFromNbp wysyłam date:', this.dateInput);
     this.loading = true;
     this.message = '';
     this.rates.fetch(this.dateInput || undefined).subscribe({
@@ -52,7 +53,7 @@ export class AppComponent {
 
   loadByDate() {
     if (!this.dateInput) {
-      this.message = 'Podaj datę (DD-MM-YYYY)';
+      this.message = 'Podaj datę (YYYY-MM-DD)';
       return;
     }
     this.loading = true;

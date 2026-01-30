@@ -3,9 +3,9 @@
 
   <div class="controls">
     <label>
-      Data (DD-MM-YYYY):
-      <!--  <input [(ngModel)]="dateInput" placeholder="np. 2026-01-30" />  -->
-      <input type="date" [(ngModel)]="dateInput">
+      Data (YYYY-MM-DD):
+      <!--  <input type="date" [(ngModel)]="dateInput">  -->
+      <input [(ngModel)]="dateInput" placeholder="np. 2026-01-30" />
     </label>
 
     <button (click)="fetchFromNbp()" [disabled]="loading">Pobierz kursy z NBP</button>
