@@ -1,0 +1,6 @@
+.container { max-width: 900px; margin: 0 auto; font-family: Arial, sans-serif; }
+.controls, .summary-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+button { padding: 6px 12px; }
+table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+th, td { border: 1px solid #ddd; padding: 6px 8px; }
+.message { margin: 8px 0; color: #d9534f; }

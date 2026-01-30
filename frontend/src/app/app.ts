@@ -1,12 +1,84 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RatesService } from './services/rates.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrls: ['./app.scss'],
 })
-export class App {
-  protected readonly title = signal('fx-frontend');
+export class AppComponent {
+  title = 'FX Rates Dashboard';
+  dateInput = '';
+  summaryPeriod: 'year' | 'quarter' | 'month' | 'day' = 'month';
+  loading = false;
+  latestData: any = null;
+  summaryData: any = null;
+  message = '';
+
+  constructor(private rates: RatesService) {}
+
+  fetchFromNbp() {
+    this.loading = true;
+    this.message = '';
+    this.rates.fetch(this.dateInput || undefined).subscribe({
+      next: (res) => {
+        this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
+        this.loading = false;
+      },
+    });
+  }
+
+  loadLatest() {
+    this.loading = true;
+    this.rates.getLatest().subscribe({
+      next: (res) => {
+        this.latestData = res;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.message = `Błąd: ${err.error?.error || err.message}`;
+        this.loading = false;
+      },
+    });
+  }
+
+  loadByDate() {
+    if (!this.dateInput) {
+      this.message = 'Podaj datę (YYYY-MM-DD)';
+      return;
+    }
+    this.loading = true;
+    this.rates.getByDate(this.dateInput).subscribe({
+      next: (res) => {
+        this.latestData = res;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.message = `Błąd: ${err.error?.error || err.message}`;
+        this.loading = false;
+      },
+    });
+  }
+
+  loadSummary() {
+    this.loading = true;
+    this.rates.getSummary(this.summaryPeriod).subscribe({
+      next: (res) => {
+        this.summaryData = res;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.message = `Błąd: ${err.error?.error || err.message}`;
+        this.loading = false;
+      },
+    });
+  }
 }
