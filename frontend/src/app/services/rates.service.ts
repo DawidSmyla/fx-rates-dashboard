@@ -1,0 +1,32 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class RatesService {
+  private API_BASE = 'http://localhost:8000/api';
+
+  constructor(private http: HttpClient) {}
+
+  getLatest(): Observable<any> {
+    return this.http.get(`${this.API_BASE}/rates/latest/`);
+  }
+
+  getByDate(date: string): Observable<any> {
+    return this.http.get(`${this.API_BASE}/rates/`, { params: { date } });
+  }
+
+  getCurrencies(): Observable<any> {
+    return this.http.get(`${this.API_BASE}/currencies/`);
+  }
+
+  getSummary(period: 'year' | 'quarter' | 'month' | 'day'): Observable<any> {
+    return this.http.get(`${this.API_BASE}/rates/summary/`, { params: { period } });
+  }
+
+  fetch(date?: string): Observable<any> {
+    const params: any = {};
+    if (date) params.date = date;
+    return this.http.post(`${this.API_BASE}/currencies/fetch/`, {}, { params });
+  }
+}
