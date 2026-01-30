@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db.models import Max
 from django.db.models.functions import TruncYear, TruncQuarter, TruncMonth, TruncDate
 from django.http import JsonResponse, HttpResponseNotAllowed
+from django.views.decorators.csrf import csrf_exempt 
 from .models import ExchangeRate
 from .serializers import ExchangeRateSerializer
 import requests
@@ -59,7 +60,7 @@ def list_currencies(request):
     )
     return JsonResponse({"currencies": list(qs)})
 
-
+@csrf_exempt
 def fetch_currencies(request):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])

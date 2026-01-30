@@ -5,7 +5,8 @@ from pytest_bdd import scenarios, given, when, then, parsers
 from rest_framework.test import APIClient
 from rates.models import ExchangeRate
 
-BASE_DIR = Path(__file__).resolve().parents[3]  # fx-rates-dashboard
+# BASE_DIR = Path(__file__).resolve().parents[3]  # fx-rates-dashboard
+BASE_DIR = Path(__file__).resolve().parents[2]    # app
 FEATURE_FILE = BASE_DIR / "bdd" / "fetch_rates.feature"
 
 scenarios(FEATURE_FILE)

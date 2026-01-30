@@ -8,7 +8,8 @@ from rates.models import ExchangeRate
 CODE_USD = "USD"
 CODE_EUR = "EUR"
 
-# dla zwiększenia czytelności wszystkie daty i kursy wrzucone jako stałe poniżej, bo za dużo tych cyferek było
+# dla zwiększenia czytelności (w mojej ocenie) wszystkie daty i kursy wrzucone jako stałe poniżej, 
+# bo za dużo tych cyferek było
 
 DATE_LATEST = date(2026, 1, 30)
 DATE_OTHER = date(2026, 1, 29)

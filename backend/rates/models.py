@@ -1,7 +1,7 @@
 from django.db import models
 
 class ExchangeRate(models.Model):
-    currency = models.CharField(max_length=8)
+    currency = models.CharField(max_length=64)
     code = models.CharField(max_length=4)
     rate = models.DecimalField(max_digits=12, decimal_places=6)
     effective_date = models.DateField()
