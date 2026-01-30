@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.egg-info/
+.venv/
+env/
+venv/
+
+# Node/Angular
+node_modules/
+dist/
+.build/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Docker / env
+*.env
+.env*
