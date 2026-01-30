@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 from rest_framework.test import APIClient
 from rates.models import ExchangeRate
+from django.urls import reverse
 
 
 CODE_USD = "USD"
@@ -116,3 +117,34 @@ def test_rates_summary_month(client, db):
 def test_rates_summary_bad_period(client, db):
     resp = client.get("/api/rates/summary/?period=week")
     assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_currencies_latest_alias(client, db):
+    ExchangeRate.objects.create(
+        code=CODE_USD,
+        currency="US Dollar",
+        rate=RATE_USD_LATEST,
+        effective_date=DATE_LATEST,
+    )
+    resp = client.get("/api/currencies/latest/")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["date"] == DATE_LATEST.isoformat()
+    codes = {r["code"] for r in body["rates"]}
+    assert CODE_USD in codes
+
+@pytest.mark.django_db
+def test_currencies_date_alias(client, db):
+    ExchangeRate.objects.create(
+        code=CODE_EUR,
+        currency="Euro",
+        rate=RATE_EUR_OTHER,
+        effective_date=DATE_OTHER,
+    )
+    resp = client.get(f"/api/currencies/{DATE_OTHER.isoformat()}/")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["date"] == DATE_OTHER.isoformat()
+    codes = {r["code"] for r in body["rates"]}
+    assert CODE_EUR in codes
