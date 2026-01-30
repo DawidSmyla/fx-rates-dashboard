@@ -3,23 +3,24 @@
 
   <div class="controls">
     <label>
-      Data (YYYY-MM-DD):
-      <input [(ngModel)]="dateInput" placeholder="np. 2026-01-30" />
+      Data (DD-MM-YYYY):
+      <!--  <input [(ngModel)]="dateInput" placeholder="np. 2026-01-30" />  -->
+      <input type="date" [(ngModel)]="dateInput">
     </label>
 
-    <button (click)="fetchFromNbp()" [disabled]="loading">Pobierz z NBP (POST)</button>
-    <button (click)="loadLatest()" [disabled]="loading">Pokaż najnowsze</button>
-    <button (click)="loadByDate()" [disabled]="loading">Pokaż dla daty</button>
+    <button (click)="fetchFromNbp()" [disabled]="loading">Pobierz kursy z NBP</button>
+    <button (click)="loadLatest()" [disabled]="loading">Pokaż najnowsze kursy</button>
+    <button (click)="loadByDate()" [disabled]="loading">Pokaż kursy dla wybranej daty</button>
   </div>
 
   <div class="summary-controls">
     <label>
-      Okres (summary):
+      Okres:
       <select [(ngModel)]="summaryPeriod">
-        <option value="year">year</option>
-        <option value="quarter">quarter</option>
-        <option value="month">month</option>
-        <option value="day">day</option>
+        <option value="year">rok</option>
+        <option value="quarter">kwartał</option>
+        <option value="month">miesiąc</option>
+        <option value="day">dzień</option>
       </select>
     </label>
     <button (click)="loadSummary()" [disabled]="loading">Pokaż podsumowanie</button>

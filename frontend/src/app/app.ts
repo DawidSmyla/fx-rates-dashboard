@@ -11,7 +11,7 @@ import { RatesService } from './services/rates.service';
   styleUrls: ['./app.scss'],
 })
 export class AppComponent {
-  title = 'FX Rates Dashboard';
+  title = 'Przeglądaj kursy walut';
   dateInput = '';
   summaryPeriod: 'year' | 'quarter' | 'month' | 'day' = 'month';
   loading = false;
@@ -52,7 +52,7 @@ export class AppComponent {
 
   loadByDate() {
     if (!this.dateInput) {
-      this.message = 'Podaj datę (YYYY-MM-DD)';
+      this.message = 'Podaj datę (DD-MM-YYYY)';
       return;
     }
     this.loading = true;
