@@ -1,10 +1,29 @@
-Feature: Pobieranie kursów walut z NBP
-  Aby mieć aktualne kursy
-  jako użytkownik aplikacji
-  chcę pobrać kursy dla wybranego zakresu dat
+Feature: Pobieranie kursów walut
+  Jako konsument API
+  Chcę pobierać najnowsze kursy walut
+  Aby wyświetlać je w dashboardzie
 
-  Scenario: Pobranie kursów dla zakresu dat
-    Given baza jest pusta
-    When wywołam POST /currencies/fetch z datami 2026-01-01 do 2026-01-05
-    Then otrzymam status 200
-    And w bazie są kursy dla dat 2026-01-01 do 2026-01-05
+  Background:
+    Zakładając, że walutą bazową jest "PLN"
+
+  Scenario: Pobranie najnowszych kursów kończy się powodzeniem
+    Zakładając, że istnieją następujące kursy walut:
+      | code | currency       | rate   | effective_date |
+      | USD  | US Dollar      | 3.9900 | 2026-01-30     |
+      | EUR  | Euro           | 4.3200 | 2026-01-30     |
+      | GBP  | British GBP    | 5.1100 | 2026-01-30     |
+    Kiedy wysyłam GET /api/rates/latest
+    Wtedy kod odpowiedzi to 200
+    Oraz pole base w odpowiedzi to "PLN"
+    Oraz pole date w odpowiedzi to "2026-01-30"
+    Oraz odpowiedź zawiera kursy:
+      | code | currency       | rate   |
+      | USD  | US Dollar      | 3.9900 |
+      | EUR  | Euro           | 4.3200 |
+      | GBP  | British GBP    | 5.1100 |
+
+  Scenario: Brak kursów
+    Zakładając, że nie ma żadnych kursów
+    Kiedy wysyłam GET /api/rates/latest
+    Wtedy kod odpowiedzi to 404
+    Oraz odpowiedź zawiera błąd "no rates available"
