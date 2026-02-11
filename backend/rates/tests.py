@@ -148,3 +148,83 @@ def test_currencies_date_alias(client, db):
     assert body["date"] == DATE_OTHER.isoformat()
     codes = {r["code"] for r in body["rates"]}
     assert CODE_EUR in codes
+
+
+@pytest.mark.django_db
+def test_rates_range_returns_data(client, db):
+    """Test: zakres dat zwraca kursy pogrupowane po dacie."""
+    ExchangeRate.objects.create(
+        code=CODE_USD, currency="US Dollar",
+        rate=RATE_USD_LATEST, effective_date=DATE_LATEST,
+    )
+    ExchangeRate.objects.create(
+        code=CODE_EUR, currency="Euro",
+        rate=RATE_EUR_OTHER, effective_date=DATE_OTHER,
+    )
+    ExchangeRate.objects.create(
+        code=CODE_USD, currency="US Dollar",
+        rate=RATE_USD_OTHER, effective_date=DATE_MID,
+    )
+    resp = client.get(
+        f"/api/rates/range/?date_from={DATE_MID.isoformat()}&date_to={DATE_LATEST.isoformat()}"
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["date_from"] == DATE_MID.isoformat()
+    assert body["date_to"] == DATE_LATEST.isoformat()
+    assert DATE_LATEST.isoformat() in body["dates"]
+    assert DATE_OTHER.isoformat() in body["dates"]
+    assert DATE_MID.isoformat() in body["dates"]
+
+
+@pytest.mark.django_db
+def test_rates_range_missing_params(client, db):
+    """Test: brakujące parametry zwracają 400."""
+    resp = client.get("/api/rates/range/")
+    assert resp.status_code == 400
+
+    resp = client.get(f"/api/rates/range/?date_from={DATE_MID.isoformat()}")
+    assert resp.status_code == 400
+
+    resp = client.get(f"/api/rates/range/?date_to={DATE_LATEST.isoformat()}")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_rates_range_bad_format(client, db):
+    """Test: nieprawidłowy format daty zwraca 400."""
+    resp = client.get("/api/rates/range/?date_from=29-01-2026&date_to=2026-01-30")
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_rates_range_from_after_to(client, db):
+    """Test: date_from > date_to zwraca 400."""
+    resp = client.get(
+        f"/api/rates/range/?date_from={DATE_LATEST.isoformat()}&date_to={DATE_MID.isoformat()}"
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_rates_range_no_data(client, db):
+    """Test: brak danych w podanym zakresie zwraca 404."""
+    resp = client.get("/api/rates/range/?date_from=2020-01-01&date_to=2020-01-31")
+    assert resp.status_code == 404
+
+
+@pytest.mark.django_db
+def test_rates_range_single_day(client, db):
+    """Test: zakres jednego dnia zwraca poprawne dane."""
+    ExchangeRate.objects.create(
+        code=CODE_USD, currency="US Dollar",
+        rate=RATE_USD_LATEST, effective_date=DATE_LATEST,
+    )
+    resp = client.get(
+        f"/api/rates/range/?date_from={DATE_LATEST.isoformat()}&date_to={DATE_LATEST.isoformat()}"
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["dates"]) == 1
+    assert DATE_LATEST.isoformat() in body["dates"]
+    assert body["dates"][DATE_LATEST.isoformat()][0]["code"] == CODE_USD
