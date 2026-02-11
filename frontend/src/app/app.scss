@@ -7,7 +7,6 @@
   color: #f5f5f5;
   font-family: 'Roboto', Arial, sans-serif;
   height: 100%;
-  //overflow: hidden;
 }
 
 :host {
@@ -34,12 +33,30 @@ h1, h2, h3 {
 }
 
 .controls,
-.summary-controls {
+.summary-controls,
+.filter-controls {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
   margin-bottom: 24px;
+}
+
+.date-range {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.date-range label {
+  width: auto;
+  max-width: none;
+}
+
+.date-range input[type="date"] {
+  width: 180px;
 }
 
 label {
@@ -63,6 +80,12 @@ select {
   margin: 0 auto;
   text-align: center;
   box-sizing: border-box;
+}
+
+.filter-controls input[type="text"] {
+  width: var(--ctrl-width);
+  padding: 12px 14px;
+  font-size: 15px;
 }
 
 button {
@@ -100,6 +123,12 @@ input[type="date"] {
   color: #ffb347;
 }
 
+.spinner {
+  margin: 18px 0;
+  color: #888;
+  font-style: italic;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -119,6 +148,23 @@ td {
   background: #242424;
 }
 
+.range-day {
+  margin-bottom: 32px;
+}
+
+.no-results {
+  color: #888;
+  font-style: italic;
+  margin-top: 12px;
+}
+
+.latest,
+.range,
+.summary {
+  width: 100%;
+  max-width: 800px;
+}
+
 @media (max-width: 768px), (max-height: 700px) {
   :host, ::ng-deep html, ::ng-deep body {
     height: auto;
@@ -127,5 +173,11 @@ td {
   }
   :host {
     min-height: 100vh;
+  }
+  .date-range {
+    flex-direction: column;
+  }
+  .date-range input[type="date"] {
+    width: var(--ctrl-width);
   }
 }
