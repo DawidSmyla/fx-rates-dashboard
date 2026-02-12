@@ -276,14 +276,18 @@ All tests pass successfully:
 
 ## Screenshots
 
-*(Add screenshots here)*
+1. Initial view after launch <img width="1904" height="949" alt="image" src="https://github.com/user-attachments/assets/06f3055f-2957-4639-b13b-c65ef16e425b" />
 
-1. Initial view after launch
-2. Fetched exchange rates – table view
-3. Monthly summary with currency filter
-4. Line chart for selected currencies
-5. Multi-select dropdown with search
-6. Docker containers running
+2. Fetched exchange rates – table view <img width="2551" height="1349" alt="image" src="https://github.com/user-attachments/assets/af748c7d-2c6a-4e9f-8b99-8fb309a89950" />
+
+3. Monthly summary with currency filter <img width="2551" height="1347" alt="image" src="https://github.com/user-attachments/assets/88c6dcac-b3e0-474f-86d8-5bae0dff17db" />
+
+4. Line chart for selected currencies <img width="1915" height="965" alt="image" src="https://github.com/user-attachments/assets/323431b3-2e31-4882-a490-47ab8cb82975" />
+
+5. Multi-select dropdown with search <img width="1915" height="967" alt="image" src="https://github.com/user-attachments/assets/c776ff8d-bd62-43d3-a2ab-3ad62b2cbf4a" />
+
+6. Docker containers running <img width="1350" height="1369" alt="image" src="https://github.com/user-attachments/assets/bb027500-1273-46d1-85be-0ce6cf48eb47" />
+
 
 
 
