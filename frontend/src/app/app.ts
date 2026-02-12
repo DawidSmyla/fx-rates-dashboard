@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RatesService } from './services/rates.service';
@@ -13,24 +13,20 @@ import { RatesService } from './services/rates.service';
 export class AppComponent {
   title = 'Przeglądaj kursy walut';
 
-  // Pola dat – zakres
   dateFrom = '';
   dateTo = '';
 
-  // Filtrowanie tabeli
   summaryPeriod: 'year' | 'quarter' | 'month' | 'day' = 'month';
   filterCode = ''; 
 
-  // Stan
   loading = false;
   message = '';
 
-  // Dane
   latestData: any = null;
   rangeData: any = null;
   summaryData: any = null;
 
-  constructor(private rates: RatesService) {}
+  constructor(private rates: RatesService, private cdr: ChangeDetectorRef) {}
 
 
   get rangeDateKeys(): string[] {
@@ -44,11 +40,40 @@ export class AppComponent {
     return rates.filter((r: any) => r.code.toUpperCase().includes(query));
   }
 
+    get summaryTitle(): string {
+    if (!this.summaryData) return '';
+    const titles: Record<string, string> = {
+      year: 'Średnie kursy walut dla poszczególnych lat',
+      quarter: 'Średnie kursy walut dla poszczególnych kwartałów',
+      month: 'Średnie kursy walut dla poszczególnych miesięcy',
+      day: 'Kursy walut dla poszczególnych dni',
+    };
+    return titles[this.summaryData.period] || 'Podsumowanie';
+  }
+
+  formatPeriodKey(key: string): string {
+    if (!this.summaryData) return key;
+    const period = this.summaryData.period;
+    if (period === 'year') return key.substring(0, 4);
+    if (period === 'month') return key.substring(0, 7);
+    if (period === 'quarter') {
+      const month = parseInt(key.substring(5, 7), 10);
+      const q = Math.ceil(month / 3);
+      return `${key.substring(0, 4)} Q${q}`;
+    }
+    return key;
+  }
+
   private clearResults() {
     this.message = '';
     this.latestData = null;
     this.rangeData = null;
     this.summaryData = null;
+  }
+
+    private done() {
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
   // ========== AKCJE PRZYCISKÓW ==========
@@ -63,11 +88,11 @@ export class AppComponent {
         next: (res) => {
           this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych `
             + `(${res.fetched_dates_count} dni roboczych od ${res.date_from} do ${res.date_to})`;
-          this.loading = false;
+          this.done();
         },
         error: (err) => {
           this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
-          this.loading = false;
+          this.done();
         },
       });
     } else if (this.dateFrom || this.dateTo) {
@@ -76,11 +101,11 @@ export class AppComponent {
       this.rates.fetch(singleDate).subscribe({
         next: (res) => {
           this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
-          this.loading = false;
+          this.done();
         },
         error: (err) => {
           this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
-          this.loading = false;
+          this.done();
         },
       });
     } else {
@@ -88,11 +113,11 @@ export class AppComponent {
       this.rates.fetch().subscribe({
         next: (res) => {
           this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
-          this.loading = false;
+          this.done();
         },
         error: (err) => {
           this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
-          this.loading = false;
+          this.done();
         },
       });
     }
@@ -105,11 +130,11 @@ export class AppComponent {
     this.rates.getLatest().subscribe({
       next: (res) => {
         this.latestData = res;
-        this.loading = false;
+        this.done();
       },
       error: (err) => {
         this.message = `Błąd: ${err.error?.error || err.message}`;
-        this.loading = false;
+        this.done();
       },
     });
   }
@@ -130,11 +155,11 @@ export class AppComponent {
       this.rates.getByDateRange(this.dateFrom, this.dateTo).subscribe({
         next: (res) => {
           this.rangeData = res;
-          this.loading = false;
+          this.done();
         },
         error: (err) => {
           this.message = `Błąd: ${err.error?.error || err.message}`;
-          this.loading = false;
+          this.done();
         },
       });
     } else {
@@ -143,11 +168,11 @@ export class AppComponent {
       this.rates.getByDate(singleDate).subscribe({
         next: (res) => {
           this.latestData = res;
-          this.loading = false;
+          this.done();
         },
         error: (err) => {
           this.message = `Błąd: ${err.error?.error || err.message}`;
-          this.loading = false;
+          this.done();
         },
       });
     }
@@ -159,11 +184,11 @@ export class AppComponent {
     this.rates.getSummary(this.summaryPeriod).subscribe({
       next: (res) => {
         this.summaryData = res;
-        this.loading = false;
+        this.done();
       },
       error: (err) => {
         this.message = `Błąd: ${err.error?.error || err.message}`;
-        this.loading = false;
+        this.done();
       },
     });
   }

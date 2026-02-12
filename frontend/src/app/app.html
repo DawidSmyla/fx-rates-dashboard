@@ -94,9 +94,9 @@
 
   <!-- ========== TABELA: PODSUMOWANIE (summaryData) ========== -->
   <div class="summary" *ngIf="summaryData">
-    <h2>Podsumowanie ({{ summaryData.period }})</h2>
+    <h2>{{ summaryTitle }}</h2>
     <div *ngFor="let row of summaryData.data | keyvalue">
-      <h3>{{ row.key }}</h3>
+      <h3>{{ formatPeriodKey(row.key.toString()) }}</h3>
       <table>
         <thead>
           <tr><th>Kod</th><th>Waluta</th><th>Kurs</th></tr>
