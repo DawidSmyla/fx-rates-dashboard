@@ -76,14 +76,14 @@ The application runs in Docker containers and can be started with a single `dock
 
 ### Data Fetching
 
-- **Fetch rates from NBP** – fetches exchange rates from the NBP API for a selected date, date range, or the latest available data, and saves them to the database
+- **Fetch rates from NBP (Pobierz kursy z NBP)** – fetches exchange rates from the NBP API for a selected date, date range, or the latest available data, and saves them to the database
 - **Bulk fetching** – for date ranges, the app iterates over each day and fetches data from NBP (skipping weekends/holidays when API returns 404)
 
 ### Data Display
 
-- **Show latest rates** – displays the most recent rates from the database
-- **Show rates for selected range** – displays rates grouped by date for the selected date range
-- **Show summary** – displays average rates grouped by selected period:
+- **Show latest rates (Pokaż najnowsze kursy)** – displays the most recent rates from the database
+- **Show rates for selected range (Pokaż kursy z wybranego zakresu dat)** – displays rates grouped by date for the selected date range
+- **Show summary (Pokaż podsumowanie)** – displays average rates grouped by selected period:
   - **Year** – header e.g. "2024"
   - **Quarter** – header e.g. "2024 Q2"
   - **Month** – header e.g. "2024-01"
@@ -93,12 +93,11 @@ The application runs in Docker containers and can be started with a single `dock
 
 - Multi-select dropdown with checkboxes
 - Search by currency code (e.g. "USD") or name (e.g. "dolar")
-- "Clear selection" button at the bottom of the expanded list
-- List closes when clicking outside
+- "Clear selection" button at the bottom of the expanded list, visible only when at least one currency is selected
 
 ### Chart
 
-- "Show chart" / "Show table" button toggles between table and line chart views
+- "Show chart" / "Show table" ("Pokaż wykres" / "Pokaż tabelę") button toggles between table and line chart views
 - Line chart (Chart.js) with a separate line for each currency
 - Random colors for each currency, legend below the chart
 - Chart respects currency filter and date range
@@ -276,12 +275,20 @@ All tests pass successfully:
 
 ## Screenshots
 
-1. Initial view after launch
-2. Fetched exchange rates – table view
-3. Monthly summary with currency filter
-4. Line chart for selected currencies
-5. Multi-select dropdown with search
-6. Docker containers running
+1. Initial view after launch <img width="1904" height="949" alt="image" src="https://github.com/user-attachments/assets/06f3055f-2957-4639-b13b-c65ef16e425b" />
+
+2. Fetched exchange rates – table view <img width="2551" height="1349" alt="image" src="https://github.com/user-attachments/assets/af748c7d-2c6a-4e9f-8b99-8fb309a89950" />
+
+3. Monthly summary with currency filter <img width="2551" height="1347" alt="image" src="https://github.com/user-attachments/assets/88c6dcac-b3e0-474f-86d8-5bae0dff17db" />
+
+4. Line chart for selected currencies <img width="1915" height="965" alt="image" src="https://github.com/user-attachments/assets/323431b3-2e31-4882-a490-47ab8cb82975" />
+
+5. Multi-select dropdown with search <img width="1915" height="967" alt="image" src="https://github.com/user-attachments/assets/c776ff8d-bd62-43d3-a2ab-3ad62b2cbf4a" />
+
+6. Docker containers running <img width="1658" height="140" alt="image" src="https://github.com/user-attachments/assets/a4d51887-d860-4f44-93bc-0b05cf2be1f0" />
+
+
+
 
 
 
