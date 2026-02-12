@@ -276,8 +276,6 @@ All tests pass successfully:
 
 ## Screenshots
 
-*(Add screenshots here)*
-
 1. Initial view after launch
 2. Fetched exchange rates – table view
 3. Monthly summary with currency filter
