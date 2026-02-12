@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RatesService } from './services/rates.service';
@@ -17,10 +17,10 @@ export class AppComponent {
   dateTo = '';
 
   summaryPeriod: 'year' | 'quarter' | 'month' | 'day' = 'month';
-  filterCode = '';
-  availableCurrencies: string[] = [];
+  availableCurrencies: { code: string; currency: string }[] = [];
+  searchQuery = '';
   selectedCurrencies: string[] = [];
-
+  dropdownOpen = false;
   loading = false;
   message = '';
 
@@ -36,15 +36,23 @@ export class AppComponent {
     return Object.keys(this.rangeData.dates).sort();
   }
 
+  get filterDisplayText(): string {
+    if (this.selectedCurrencies.length === 0) return 'Wybierz waluty';
+    return this.selectedCurrencies.sort().join(', ');
+  }
+
+  get filteredDropdownItems(): { code: string; currency: string }[] {
+    if (!this.searchQuery) return this.availableCurrencies;
+    const q = this.searchQuery.toLowerCase();
+    return this.availableCurrencies.filter(c =>
+      c.code.toLowerCase().includes(q) || c.currency.toLowerCase().includes(q)
+    );
+  }
+
   filterRates(rates: any[]): any[] {
-    if (!this.filterCode) return rates;
-    const codes = this.filterCode
-      .split(',')
-      .map(c => c.trim().toUpperCase())
-      .filter(c => c.length > 0);
-    if (codes.length === 0) return rates;
+    if (this.selectedCurrencies.length === 0) return rates;
     return rates.filter((r: any) =>
-      codes.some(code => r.code.toUpperCase().includes(code))
+      this.selectedCurrencies.includes(r.code)
     );
   }
 
@@ -71,27 +79,30 @@ export class AppComponent {
     }
     return key;
   }
-
-  private clearResults() {
-    this.message = '';
-    this.latestData = null;
-    this.rangeData = null;
-    this.summaryData = null;
-  }
-
-    private done() {
-    this.loading = false;
-    this.cdr.detectChanges();
-  }
-
-
+  
   loadCurrencies() {
+    if (this.availableCurrencies.length > 0) return;
     this.rates.getCurrencies().subscribe({
       next: (res) => {
-        this.availableCurrencies = res.currencies.map((c: any) => c.code).sort();
+        this.availableCurrencies = res.currencies
+          .map((c: any) => ({ code: c.code, currency: c.currency }))
+          .sort((a: any, b: any) => a.code.localeCompare(b.code));
         this.cdr.detectChanges();
       },
     });
+  }
+
+  toggleDropdown() {
+    this.loadCurrencies();
+    this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown-wrapper')) {
+      this.dropdownOpen = false;
+    }
   }
 
   toggleCurrency(code: string) {
@@ -106,6 +117,19 @@ export class AppComponent {
   clearCurrencySelection() {
     this.selectedCurrencies = [];
   }
+
+  private clearResults() {
+    this.message = '';
+    this.latestData = null;
+    this.rangeData = null;
+    this.summaryData = null;
+  }
+
+    private done() {
+    this.loading = false;
+    this.cdr.detectChanges();
+  }
+
 
   // ========== AKCJE PRZYCISKÓW ==========
 

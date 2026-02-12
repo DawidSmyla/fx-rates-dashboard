@@ -120,24 +120,24 @@ describe('AppComponent', () => {
   });
 
   // ===== Test: Filtrowanie po kodzie waluty =====
-  it('should filter rates by code', () => {
+  it('should filter rates by selected currencies', () => {
     const rates = [
       { code: 'USD', currency: 'US Dollar', rate: '3.54' },
       { code: 'EUR', currency: 'Euro', rate: '4.21' },
       { code: 'GBP', currency: 'British Pound', rate: '5.10' },
     ];
-    app.filterCode = 'USD';
+    app.selectedCurrencies = ['USD'];
     const filtered = app.filterRates(rates);
     expect(filtered.length).toBe(1);
     expect(filtered[0].code).toBe('USD');
   });
 
-  it('should return all rates when filterCode is empty', () => {
+  it('should return all rates when no currencies selected', () => {
     const rates = [
       { code: 'USD', currency: 'US Dollar', rate: '3.54' },
       { code: 'EUR', currency: 'Euro', rate: '4.21' },
     ];
-    app.filterCode = '';
+    app.selectedCurrencies = [];
     expect(app.filterRates(rates).length).toBe(2);
   });
 
@@ -198,7 +198,7 @@ describe('AppComponent', () => {
         { code: 'EUR', currency: 'Euro', rate: '4.21' },
       ]
     };
-    app.filterCode = 'EUR';
+    app.selectedCurrencies = ['EUR'];
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const rows = compiled.querySelectorAll('.latest tbody tr');
