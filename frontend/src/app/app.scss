@@ -165,6 +165,55 @@ td {
   max-width: 800px;
 }
 
+.currency-selector {
+  margin-top: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.selector-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.currency-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.chip {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip.selected {
+  background: #4a7c59;
+  border-color: #6aad7a;
+  color: #fff;
+}
+
+.chip:hover:not(.selected) {
+  background: #3a3a3a;
+}
+
+.clear-btn,
+.load-currencies-btn {
+  width: auto;
+  padding: 8px 16px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+
 @media (max-width: 768px), (max-height: 700px) {
   :host, ::ng-deep html, ::ng-deep body {
     height: auto;
@@ -181,3 +230,4 @@ td {
     width: var(--ctrl-width);
   }
 }
+

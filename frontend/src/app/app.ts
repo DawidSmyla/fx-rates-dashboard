@@ -17,7 +17,9 @@ export class AppComponent {
   dateTo = '';
 
   summaryPeriod: 'year' | 'quarter' | 'month' | 'day' = 'month';
-  filterCode = ''; 
+  filterCode = '';
+  availableCurrencies: string[] = [];
+  selectedCurrencies: string[] = [];
 
   loading = false;
   message = '';
@@ -36,8 +38,14 @@ export class AppComponent {
 
   filterRates(rates: any[]): any[] {
     if (!this.filterCode) return rates;
-    const query = this.filterCode.toUpperCase();
-    return rates.filter((r: any) => r.code.toUpperCase().includes(query));
+    const codes = this.filterCode
+      .split(',')
+      .map(c => c.trim().toUpperCase())
+      .filter(c => c.length > 0);
+    if (codes.length === 0) return rates;
+    return rates.filter((r: any) =>
+      codes.some(code => r.code.toUpperCase().includes(code))
+    );
   }
 
     get summaryTitle(): string {
@@ -74,6 +82,29 @@ export class AppComponent {
     private done() {
     this.loading = false;
     this.cdr.detectChanges();
+  }
+
+
+  loadCurrencies() {
+    this.rates.getCurrencies().subscribe({
+      next: (res) => {
+        this.availableCurrencies = res.currencies.map((c: any) => c.code).sort();
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  toggleCurrency(code: string) {
+    const idx = this.selectedCurrencies.indexOf(code);
+    if (idx === -1) {
+      this.selectedCurrencies.push(code);
+    } else {
+      this.selectedCurrencies.splice(idx, 1);
+    }
+  }
+
+  clearCurrencySelection() {
+    this.selectedCurrencies = [];
   }
 
   // ========== AKCJE PRZYCISKÓW ==========
