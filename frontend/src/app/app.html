@@ -1,18 +1,25 @@
 <div class="container">
   <h1>{{ title }}</h1>
 
+  <!-- ========== WYBÓR ZAKRESU DAT ========== -->
   <div class="controls">
-    <label>
-      Wybierz datę:
-      <!-- <input [(ngModel)]="dateInput" placeholder="np. 2026-01-30" />  -->
-      <input type="date" [(ngModel)]="dateInput">
-    </label>
+    <div class="date-range">
+      <label>
+        Data od:
+        <input type="date" [(ngModel)]="dateFrom">
+      </label>
+      <label>
+        Data do:
+        <input type="date" [(ngModel)]="dateTo">
+      </label>
+    </div>
 
     <button (click)="fetchFromNbp()" [disabled]="loading">Pobierz kursy z NBP</button>
     <button (click)="loadLatest()" [disabled]="loading">Pokaż najnowsze kursy</button>
-    <button (click)="loadByDate()" [disabled]="loading">Pokaż kursy dla wybranej daty</button>
+    <button (click)="loadByDateRange()" [disabled]="loading">Pokaż kursy dla wybranego zakresu</button>
   </div>
 
+  <!-- ========== FILTROWANIE WG OKRESU (PODSUMOWANIE) ========== -->
   <div class="summary-controls">
     <label>
       Okres:
@@ -26,40 +33,114 @@
     <button (click)="loadSummary()" [disabled]="loading">Pokaż podsumowanie</button>
   </div>
 
+  <!-- ========== FILTROWANIE PO KODZIE WALUTY ========== -->
+  <div class="filter-controls" *ngIf="latestData || rangeData || summaryData">
+    <label>Filtruj po kodzie waluty:</label>
+    <div class="dropdown-wrapper">
+      <div class="dropdown-trigger" (click)="toggleDropdown()">
+        <span class="dropdown-text">{{ filterDisplayText }}</span>
+        <span class="dropdown-arrow" [class.open]="dropdownOpen">▼</span>
+      </div>
+      <div class="dropdown-list" *ngIf="dropdownOpen">
+        <div class="dropdown-search">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            placeholder="Szukaj waluty..."
+            (click)="$event.stopPropagation()">
+        </div>
+        <div class="dropdown-items">
+          <label *ngFor="let item of filteredDropdownItems" class="dropdown-item">
+            <input
+              type="checkbox"
+              [checked]="selectedCurrencies.includes(item.code)"
+              (change)="toggleCurrency(item.code)">
+            <span class="item-code">{{ item.code }}</span>
+            <span class="item-name">{{ item.currency }}</span>
+          </label>
+          <p class="dropdown-empty" *ngIf="filteredDropdownItems.length === 0">Brak wyników</p>
+        </div>
+        <button
+          *ngIf="selectedCurrencies.length > 0"
+          (click)="clearCurrencySelection()"
+          class="clear-btn">
+          Wyczyść wybór ({{ selectedCurrencies.length }})
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== KOMUNIKATY ========== -->
   <div class="message" *ngIf="message">{{ message }}</div>
 
+  <!-- ========== SPINNER ========== -->
+  <div class="spinner" *ngIf="loading">
+    <p>Ładowanie danych...</p>
+  </div>
+
+  <!-- ========== TABELA: JEDNA DATA (latestData) ========== -->
   <div class="latest" *ngIf="latestData">
     <h2>Kursy ({{ latestData.date }})</h2>
     <table>
       <thead>
-        <tr><th>Code</th><th>Currency</th><th>Rate</th></tr>
+        <tr><th>Kod</th><th>Waluta</th><th>Kurs</th></tr>
       </thead>
       <tbody>
-        <tr *ngFor="let r of latestData.rates">
+        <tr *ngFor="let r of filterRates(latestData.rates)">
           <td>{{ r.code }}</td>
           <td>{{ r.currency }}</td>
           <td>{{ r.rate }}</td>
         </tr>
       </tbody>
     </table>
+    <p class="no-results" *ngIf="filterRates(latestData.rates).length === 0">
+      Brak wyników dla wybranych walut
+    </p>
   </div>
 
-  <div class="summary" *ngIf="summaryData">
-    <h2>Summary ({{ summaryData.period }})</h2>
-    <div *ngFor="let row of summaryData.data | keyvalue">
-      <h3>{{ row.key }}</h3>
+  <!-- ========== TABELA: ZAKRES DAT (rangeData) ========== -->
+  <div class="range" *ngIf="rangeData">
+    <h2>Kursy od {{ rangeData.date_from }} do {{ rangeData.date_to }}</h2>
+    <div *ngFor="let dateKey of rangeDateKeys" class="range-day">
+      <h3>{{ dateKey }}</h3>
       <table>
         <thead>
-          <tr><th>Code</th><th>Currency</th><th>Rate</th></tr>
+          <tr><th>Kod</th><th>Waluta</th><th>Kurs</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of row.value">
+          <tr *ngFor="let r of filterRates(rangeData.dates[dateKey])">
             <td>{{ r.code }}</td>
             <td>{{ r.currency }}</td>
             <td>{{ r.rate }}</td>
           </tr>
         </tbody>
       </table>
+      <p class="no-results" *ngIf="filterRates(rangeData.dates[dateKey]).length === 0">
+        Brak wyników dla wybranych walut
+      </p>
+    </div>
+  </div>
+
+  <!-- ========== TABELA: PODSUMOWANIE (summaryData) ========== -->
+  <div class="summary" *ngIf="summaryData">
+    <h2>{{ summaryTitle }}</h2>
+    <div *ngFor="let row of summaryData.data | keyvalue">
+      <h3>{{ formatPeriodKey(row.key.toString()) }}</h3>
+      <table>
+        <thead>
+          <tr><th>Kod</th><th>Waluta</th><th>Kurs</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of filterRates(row.value)">
+            <td>{{ r.code }}</td>
+            <td>{{ r.currency }}</td>
+            <td>{{ r.rate }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="no-results" *ngIf="filterRates(row.value).length === 0">
+        Brak wyników dla wybranych walut"
+      </p>
     </div>
   </div>
 </div>

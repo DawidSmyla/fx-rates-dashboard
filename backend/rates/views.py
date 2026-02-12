@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date as date_type, timedelta
 from decimal import Decimal
 
 from django.db.models import Max
@@ -60,6 +60,62 @@ def list_currencies(request):
     )
     return JsonResponse({"currencies": list(qs)})
 
+
+def rates_range(request):
+    """GET /api/rates/range/?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD
+    Zwraca kursy walut z zakresu dat, pogrupowane po dacie.
+    """
+    date_from_str = request.GET.get("date_from")
+    date_to_str = request.GET.get("date_to")
+
+    if not date_from_str or not date_to_str:
+        return JsonResponse(
+            {"error": "Both date_from and date_to parameters are required (YYYY-MM-DD)"},
+            status=400,
+        )
+
+    try:
+        date_from = datetime.strptime(date_from_str, "%Y-%m-%d").date()
+    except ValueError:
+        return JsonResponse({"error": "invalid date_from format, expected YYYY-MM-DD"}, status=400)
+
+    try:
+        date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date()
+    except ValueError:
+        return JsonResponse({"error": "invalid date_to format, expected YYYY-MM-DD"}, status=400)
+
+    if date_from > date_to:
+        return JsonResponse({"error": "date_from must be <= date_to"}, status=400)
+
+    qs = (
+        ExchangeRate.objects
+        .filter(effective_date__gte=date_from, effective_date__lte=date_to)
+        .order_by("effective_date", "code")
+    )
+
+    if not qs.exists():
+        return JsonResponse({"error": "no rates available for this date range"}, status=404)
+
+    # Grupowanie po dacie
+    result = {}
+    for rate in qs:
+        key = rate.effective_date.isoformat()
+        if key not in result:
+            result[key] = []
+        result[key].append({
+            "code": rate.code,
+            "currency": rate.currency,
+            "rate": str(rate.rate),
+        })
+
+    return JsonResponse({
+        "base": "PLN",
+        "date_from": date_from.isoformat(),
+        "date_to": date_to.isoformat(),
+        "dates": result,
+    })
+
+
 @csrf_exempt
 def fetch_currencies(request):
 
@@ -68,17 +124,13 @@ def fetch_currencies(request):
 
     date_param = request.GET.get("date")
 
-    date_param = request.GET.get("date")
     if date_param:
         url = f"https://api.nbp.pl/api/exchangerates/tables/A/{date_param}/?format=json"
     else:
         url = "https://api.nbp.pl/api/exchangerates/tables/A/?format=json"
-    
 
     try:
         resp = requests.get(url, timeout=10)
-        print('NBP status:', resp.status_code, flush=True)
-        print('NBP text:', resp.text, flush=True)
     except requests.Timeout as exc:
         return JsonResponse({"error": f"NBP request timed out: {exc}"}, status=502)
     except requests.RequestException as exc:
@@ -126,6 +178,100 @@ def fetch_currencies(request):
         {"status": "ok", "date": effective_date, "created": created, "updated": updated},
         status=200,
     )
+
+
+@csrf_exempt
+def fetch_currencies_range(request):
+    """POST /api/currencies/fetch-range/?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD
+    Pobiera kursy z NBP dla każdego dnia roboczego w zakresie dat i zapisuje do bazy.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    date_from_str = request.GET.get("date_from")
+    date_to_str = request.GET.get("date_to")
+
+    if not date_from_str or not date_to_str:
+        return JsonResponse(
+            {"error": "Both date_from and date_to parameters are required (YYYY-MM-DD)"},
+            status=400,
+        )
+
+    try:
+        date_from = datetime.strptime(date_from_str, "%Y-%m-%d").date()
+    except ValueError:
+        return JsonResponse({"error": "invalid date_from format, expected YYYY-MM-DD"}, status=400)
+
+    try:
+        date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date()
+    except ValueError:
+        return JsonResponse({"error": "invalid date_to format, expected YYYY-MM-DD"}, status=400)
+
+    if date_from > date_to:
+        return JsonResponse({"error": "date_from must be <= date_to"}, status=400)
+
+    total_created, total_updated, fetched_dates, errors = 0, 0, [], []
+
+    current = date_from
+    while current <= date_to:
+        date_str = current.isoformat()
+        url = f"https://api.nbp.pl/api/exchangerates/tables/A/{date_str}/?format=json"
+
+        try:
+            resp = requests.get(url, timeout=10)
+        except requests.RequestException:
+            errors.append(date_str)
+            current += timedelta(days=1)
+            continue
+
+        if resp.status_code != 200:
+            current += timedelta(days=1)
+            continue
+
+        try:
+            data = resp.json()
+        except ValueError:
+            errors.append(date_str)
+            current += timedelta(days=1)
+            continue
+
+        if not data or not isinstance(data, list):
+            current += timedelta(days=1)
+            continue
+
+        table = data[0]
+        effective_date = table.get("effectiveDate")
+        rates = table.get("rates", [])
+
+        if effective_date and rates:
+            for r in rates:
+                code = r.get("code")
+                currency = r.get("currency")
+                mid = r.get("mid")
+                if not (code and currency and mid):
+                    continue
+                _, is_created = ExchangeRate.objects.update_or_create(
+                    code=code,
+                    effective_date=effective_date,
+                    defaults={"currency": currency, "rate": Decimal(str(mid))},
+                )
+                if is_created:
+                    total_created += 1
+                else:
+                    total_updated += 1
+            fetched_dates.append(effective_date)
+
+        current += timedelta(days=1)
+
+    return JsonResponse({
+        "status": "ok",
+        "date_from": date_from.isoformat(),
+        "date_to": date_to.isoformat(),
+        "created": total_created,
+        "updated": total_updated,
+        "fetched_dates_count": len(fetched_dates),
+        "errors": errors,
+    })
 
 
 def rates_summary(request):

@@ -16,6 +16,12 @@ export class RatesService {
     return this.http.get(`${this.API_BASE}/rates/`, { params: { date } });
   }
 
+  getByDateRange(dateFrom: string, dateTo: string): Observable<any> {
+    return this.http.get(`${this.API_BASE}/rates/range/`, {
+      params: { date_from: dateFrom, date_to: dateTo },
+    });
+  }
+
   getCurrencies(): Observable<any> {
     return this.http.get(`${this.API_BASE}/currencies/`);
   }
@@ -28,5 +34,11 @@ export class RatesService {
     const params: any = {};
     if (date) params.date = date;
     return this.http.post(`${this.API_BASE}/currencies/fetch/`, {}, { params });
+  }
+
+  fetchRange(dateFrom: string, dateTo: string): Observable<any> {
+    return this.http.post(`${this.API_BASE}/currencies/fetch-range/`, {}, {
+      params: { date_from: dateFrom, date_to: dateTo },
+    });
   }
 }

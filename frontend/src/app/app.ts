@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RatesService } from './services/rates.service';
@@ -12,73 +12,238 @@ import { RatesService } from './services/rates.service';
 })
 export class AppComponent {
   title = 'Przeglądaj kursy walut';
-  dateInput = '';
+
+  dateFrom = '';
+  dateTo = '';
+
   summaryPeriod: 'year' | 'quarter' | 'month' | 'day' = 'month';
+  availableCurrencies: { code: string; currency: string }[] = [];
+  searchQuery = '';
+  selectedCurrencies: string[] = [];
+  dropdownOpen = false;
   loading = false;
-  latestData: any = null;
-  summaryData: any = null;
   message = '';
 
-  constructor(private rates: RatesService) {}
+  latestData: any = null;
+  rangeData: any = null;
+  summaryData: any = null;
 
-  fetchFromNbp() {
-    console.log('fetchFromNbp wysyłam date:', this.dateInput);
-    this.loading = true;
-    this.message = '';
-    this.rates.fetch(this.dateInput || undefined).subscribe({
+  constructor(private rates: RatesService, private cdr: ChangeDetectorRef) {}
+
+
+  get rangeDateKeys(): string[] {
+    if (!this.rangeData?.dates) return [];
+    return Object.keys(this.rangeData.dates).sort();
+  }
+
+  get filterDisplayText(): string {
+    if (this.selectedCurrencies.length === 0) return 'Wybierz waluty';
+    return this.selectedCurrencies.sort().join(', ');
+  }
+
+  get filteredDropdownItems(): { code: string; currency: string }[] {
+    if (!this.searchQuery) return this.availableCurrencies;
+    const q = this.searchQuery.toLowerCase();
+    return this.availableCurrencies.filter(c =>
+      c.code.toLowerCase().includes(q) || c.currency.toLowerCase().includes(q)
+    );
+  }
+
+  filterRates(rates: any[]): any[] {
+    if (this.selectedCurrencies.length === 0) return rates;
+    return rates.filter((r: any) =>
+      this.selectedCurrencies.includes(r.code)
+    );
+  }
+
+    get summaryTitle(): string {
+    if (!this.summaryData) return '';
+    const titles: Record<string, string> = {
+      year: 'Średnie kursy walut dla poszczególnych lat',
+      quarter: 'Średnie kursy walut dla poszczególnych kwartałów',
+      month: 'Średnie kursy walut dla poszczególnych miesięcy',
+      day: 'Kursy walut dla poszczególnych dni',
+    };
+    return titles[this.summaryData.period] || 'Podsumowanie';
+  }
+
+  formatPeriodKey(key: string): string {
+    if (!this.summaryData) return key;
+    const period = this.summaryData.period;
+    if (period === 'year') return key.substring(0, 4);
+    if (period === 'month') return key.substring(0, 7);
+    if (period === 'quarter') {
+      const month = parseInt(key.substring(5, 7), 10);
+      const q = Math.ceil(month / 3);
+      return `${key.substring(0, 4)} Q${q}`;
+    }
+    return key;
+  }
+  
+  loadCurrencies() {
+    if (this.availableCurrencies.length > 0) return;
+    this.rates.getCurrencies().subscribe({
       next: (res) => {
-        this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
-        this.loading = false;
+        this.availableCurrencies = res.currencies
+          .map((c: any) => ({ code: c.code, currency: c.currency }))
+          .sort((a: any, b: any) => a.code.localeCompare(b.code));
+        this.cdr.detectChanges();
       },
     });
   }
 
+  toggleDropdown() {
+    this.loadCurrencies();
+    this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown-wrapper')) {
+      this.dropdownOpen = false;
+    }
+  }
+
+  toggleCurrency(code: string) {
+    const idx = this.selectedCurrencies.indexOf(code);
+    if (idx === -1) {
+      this.selectedCurrencies.push(code);
+    } else {
+      this.selectedCurrencies.splice(idx, 1);
+    }
+  }
+
+  clearCurrencySelection() {
+    this.selectedCurrencies = [];
+  }
+
+  private clearResults() {
+    this.message = '';
+    this.latestData = null;
+    this.rangeData = null;
+    this.summaryData = null;
+  }
+
+    private done() {
+    this.loading = false;
+    this.cdr.detectChanges();
+  }
+
+
+  // ========== AKCJE PRZYCISKÓW ==========
+
+  fetchFromNbp() {
+    this.clearResults();
+    this.loading = true;
+
+    if (this.dateFrom && this.dateTo) {
+      // Zakres dat – masowe pobieranie
+      this.rates.fetchRange(this.dateFrom, this.dateTo).subscribe({
+        next: (res) => {
+          this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych `
+            + `(${res.fetched_dates_count} dni roboczych od ${res.date_from} do ${res.date_to})`;
+          this.done();
+        },
+        error: (err) => {
+          this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
+          this.done();
+        },
+      });
+    } else if (this.dateFrom || this.dateTo) {
+      // Jedna data podana
+      const singleDate = this.dateFrom || this.dateTo;
+      this.rates.fetch(singleDate).subscribe({
+        next: (res) => {
+          this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
+          this.done();
+        },
+        error: (err) => {
+          this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
+          this.done();
+        },
+      });
+    } else {
+      // Brak dat – pobierz najnowsze
+      this.rates.fetch().subscribe({
+        next: (res) => {
+          this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
+          this.done();
+        },
+        error: (err) => {
+          this.message = `Błąd pobierania: ${err.error?.error || err.message}`;
+          this.done();
+        },
+      });
+    }
+  }
+
+  // Pokaż najnowsze kursy z bazy 
   loadLatest() {
+    this.clearResults();
     this.loading = true;
     this.rates.getLatest().subscribe({
       next: (res) => {
         this.latestData = res;
-        this.loading = false;
+        this.done();
       },
       error: (err) => {
         this.message = `Błąd: ${err.error?.error || err.message}`;
-        this.loading = false;
+        this.done();
       },
     });
   }
 
-  loadByDate() {
-    if (!this.dateInput) {
-      this.message = 'Podaj datę (YYYY-MM-DD)';
+  // Pokaż kursy z zakresu dat (lub jednej daty) z bazy 
+  loadByDateRange() {
+    this.clearResults();
+
+    if (!this.dateFrom && !this.dateTo) {
+      this.message = 'Podaj co najmniej jedną datę (od lub do)';
       return;
     }
+
     this.loading = true;
-    this.rates.getByDate(this.dateInput).subscribe({
-      next: (res) => {
-        this.latestData = res;
-        this.loading = false;
-      },
-      error: (err) => {
-        this.message = `Błąd: ${err.error?.error || err.message}`;
-        this.loading = false;
-      },
-    });
+
+    if (this.dateFrom && this.dateTo) {
+      // Zakres dat
+      this.rates.getByDateRange(this.dateFrom, this.dateTo).subscribe({
+        next: (res) => {
+          this.rangeData = res;
+          this.done();
+        },
+        error: (err) => {
+          this.message = `Błąd: ${err.error?.error || err.message}`;
+          this.done();
+        },
+      });
+    } else {
+      // Jedna data
+      const singleDate = this.dateFrom || this.dateTo;
+      this.rates.getByDate(singleDate).subscribe({
+        next: (res) => {
+          this.latestData = res;
+          this.done();
+        },
+        error: (err) => {
+          this.message = `Błąd: ${err.error?.error || err.message}`;
+          this.done();
+        },
+      });
+    }
   }
 
   loadSummary() {
+    this.clearResults();
     this.loading = true;
     this.rates.getSummary(this.summaryPeriod).subscribe({
       next: (res) => {
         this.summaryData = res;
-        this.loading = false;
+        this.done();
       },
       error: (err) => {
         this.message = `Błąd: ${err.error?.error || err.message}`;
-        this.loading = false;
+        this.done();
       },
     });
   }
