@@ -21,7 +21,7 @@ A web application for fetching, storing, and visualizing exchange rates from the
 FX Rates Dashboard enables users to:
 
 - Fetch average exchange rates from the NBP API (Table A) for a specific date or date range
-- Store fetched rates in a relational database (SQLite)
+- Store fetched rates in a PostgreSQL database
 - Display rates in tables grouped by year, quarter, month, or day
 - Visualize data on an interactive line chart (Chart.js)
 - Filter currencies using a multi-select dropdown with search
@@ -36,8 +36,8 @@ The application runs in Docker containers and can be started with a single `dock
 ```
 
 ┌─────────────────────┐     HTTP     ┌─────────────────────┐     SQL      ┌────────────┐
-│   Frontend (Angular)│ ◄──────────► │  Backend (Django)   │ ◄──────────► │  SQLite    │
-│   nginx :80         │   REST API   │  gunicorn :8000     │    ORM       │  db.sqlite3│
+│   Frontend (Angular)│ ◄──────────► │  Backend (Django)   │ ◄──────────► │  PostgreSQL│
+│   nginx :80         │   REST API   │  gunicorn :8000     │    ORM       │  :5432     │
 └─────────────────────┘              └─────────────────────┘              └────────────┘
                                               │
                                               │ HTTP
@@ -51,7 +51,7 @@ The application runs in Docker containers and can be started with a single `dock
 
 - **Frontend** – Angular app served by nginx (port 80)
 - **Backend** – Django REST Framework served by gunicorn (port 8000)
-- **Database** – SQLite (file-based, inside backend container)
+- **Database** – PostgreSQL 16 (running in a separate Docker container)
 - **External API** – NBP API (https://api.nbp.pl)
 
 ---
@@ -62,7 +62,7 @@ The application runs in Docker containers and can be started with a single `dock
 |----------------|-------------------------------------|
 | Frontend       | Angular 19, TypeScript, SCSS        |
 | Backend        | Python 3.12, Django 5, DRF          |
-| Database       | SQLite                              |
+| Database       | PostgreSQL 16                              |
 | Charts         | Chart.js 4.4                        |
 | Containerization | Docker, Docker Compose            |
 | HTTP Server    | nginx (frontend), gunicorn (backend)|
@@ -120,7 +120,7 @@ fx-rates-dashboard/
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   ├── manage.py
-│   ├── fx_backend/
+│   ├── config/
 │   │   ├── settings.py
 │   │   ├── urls.py
 │   │   └── wsgi.py
