@@ -21,6 +21,8 @@ export class AppComponent {
   searchQuery = '';
   selectedCurrencies: string[] = [];
   dropdownOpen = false;
+  showChart = false;
+  chartColors: Record<string, string> = {};
   loading = false;
   message = '';
 
@@ -29,7 +31,6 @@ export class AppComponent {
   summaryData: any = null;
 
   constructor(private rates: RatesService, private cdr: ChangeDetectorRef) {}
-
 
   get rangeDateKeys(): string[] {
     if (!this.rangeData?.dates) return [];
@@ -56,7 +57,7 @@ export class AppComponent {
     );
   }
 
-    get summaryTitle(): string {
+  get summaryTitle(): string {
     if (!this.summaryData) return '';
     const titles: Record<string, string> = {
       year: 'Średnie kursy walut dla poszczególnych lat',
@@ -79,7 +80,7 @@ export class AppComponent {
     }
     return key;
   }
-  
+
   loadCurrencies() {
     if (this.availableCurrencies.length > 0) return;
     this.rates.getCurrencies().subscribe({
@@ -97,6 +98,93 @@ export class AppComponent {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
+  toggleChart() {
+    this.showChart = !this.showChart;
+    if (this.showChart && this.summaryData) {
+      setTimeout(() => this.renderChart(), 100);
+    }
+  }
+
+  private getColorForCode(code: string): string {
+    if (!this.chartColors[code]) {
+      const r = Math.floor(Math.random() * 180 + 50);
+      const g = Math.floor(Math.random() * 180 + 50);
+      const b = Math.floor(Math.random() * 180 + 50);
+      this.chartColors[code] = `rgb(${r}, ${g}, ${b})`;
+    }
+    return this.chartColors[code];
+  }
+
+  private renderChart() {
+    const canvas = document.getElementById('summaryChart') as HTMLCanvasElement;
+    if (!canvas || !this.summaryData) return;
+
+    const existingChart = (window as any).__fxChart;
+    if (existingChart) existingChart.destroy();
+
+    const labels = Object.keys(this.summaryData.data).sort();
+    const formattedLabels = labels.map((l: string) => this.formatPeriodKey(l));
+
+    const allCodes = new Set<string>();
+    for (const key of labels) {
+      for (const r of this.summaryData.data[key]) {
+        allCodes.add(r.code);
+      }
+    }
+
+    const codesToShow = this.selectedCurrencies.length > 0
+      ? [...allCodes].filter(c => this.selectedCurrencies.includes(c))
+      : [...allCodes];
+
+    const Chart = (window as any).Chart;
+    if (!Chart) return;
+
+    const datasets = codesToShow.sort().map(code => {
+      const color = this.getColorForCode(code);
+      const data = labels.map(label => {
+        const entry = this.summaryData.data[label]?.find((r: any) => r.code === code);
+        return entry ? parseFloat(entry.rate) : null;
+      });
+      return {
+        label: code,
+        data,
+        borderColor: color,
+        backgroundColor: color,
+        fill: false,
+        tension: 0.3,
+        pointRadius: 3,
+        borderWidth: 2,
+      };
+    });
+
+    (window as any).__fxChart = new Chart(canvas, {
+      type: 'line',
+      data: { labels: formattedLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom' as const,
+            labels: { color: '#f5f5f5', font: { size: 12 }, padding: 16 },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#aaa', maxRotation: 45 },
+            grid: { color: '#333' },
+          },
+          y: {
+            ticks: { color: '#aaa' },
+            grid: { color: '#333' },
+          },
+        },
+      },
+    });
+
+    this.cdr.detectChanges();
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     const target = event.target as HTMLElement;
@@ -112,10 +200,12 @@ export class AppComponent {
     } else {
       this.selectedCurrencies.splice(idx, 1);
     }
+    this.refreshSummary();
   }
 
   clearCurrencySelection() {
     this.selectedCurrencies = [];
+    this.refreshSummary();
   }
 
   private clearResults() {
@@ -125,11 +215,32 @@ export class AppComponent {
     this.summaryData = null;
   }
 
-    private done() {
+  private done() {
     this.loading = false;
     this.cdr.detectChanges();
   }
 
+  private doneSummary() {
+    this.loading = false;
+    if (this.showChart) {
+      setTimeout(() => this.renderChart(), 100);
+    }
+    this.cdr.detectChanges();
+  }
+
+  // Automatyczne odświeżanie podsumowania
+  onPeriodChange() {
+    this.refreshSummary();
+  }
+
+  onDateChange() {
+    this.refreshSummary();
+  }
+
+  private refreshSummary() {
+    if (!this.summaryData && !this.showChart) return;
+    this.loadSummary();
+  }
 
   // ========== AKCJE PRZYCISKÓW ==========
 
@@ -138,7 +249,6 @@ export class AppComponent {
     this.loading = true;
 
     if (this.dateFrom && this.dateTo) {
-      // Zakres dat – masowe pobieranie
       this.rates.fetchRange(this.dateFrom, this.dateTo).subscribe({
         next: (res) => {
           this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych `
@@ -151,7 +261,6 @@ export class AppComponent {
         },
       });
     } else if (this.dateFrom || this.dateTo) {
-      // Jedna data podana
       const singleDate = this.dateFrom || this.dateTo;
       this.rates.fetch(singleDate).subscribe({
         next: (res) => {
@@ -164,7 +273,6 @@ export class AppComponent {
         },
       });
     } else {
-      // Brak dat – pobierz najnowsze
       this.rates.fetch().subscribe({
         next: (res) => {
           this.message = `Pobrano: ${res.created} nowych, ${res.updated} zaktualizowanych (data ${res.date})`;
@@ -178,7 +286,6 @@ export class AppComponent {
     }
   }
 
-  // Pokaż najnowsze kursy z bazy 
   loadLatest() {
     this.clearResults();
     this.loading = true;
@@ -194,7 +301,6 @@ export class AppComponent {
     });
   }
 
-  // Pokaż kursy z zakresu dat (lub jednej daty) z bazy 
   loadByDateRange() {
     this.clearResults();
 
@@ -206,7 +312,6 @@ export class AppComponent {
     this.loading = true;
 
     if (this.dateFrom && this.dateTo) {
-      // Zakres dat
       this.rates.getByDateRange(this.dateFrom, this.dateTo).subscribe({
         next: (res) => {
           this.rangeData = res;
@@ -218,7 +323,6 @@ export class AppComponent {
         },
       });
     } else {
-      // Jedna data
       const singleDate = this.dateFrom || this.dateTo;
       this.rates.getByDate(singleDate).subscribe({
         next: (res) => {
@@ -234,15 +338,18 @@ export class AppComponent {
   }
 
   loadSummary() {
-    this.clearResults();
+    this.message = '';
+    this.latestData = null;
+    this.rangeData = null;
     this.loading = true;
-    this.rates.getSummary(this.summaryPeriod).subscribe({
+    this.rates.getSummary(this.summaryPeriod, this.dateFrom, this.dateTo).subscribe({
       next: (res) => {
         this.summaryData = res;
-        this.done();
+        this.doneSummary();
       },
       error: (err) => {
         this.message = `Błąd: ${err.error?.error || err.message}`;
+        this.summaryData = null;
         this.done();
       },
     });
