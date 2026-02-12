@@ -26,8 +26,11 @@ export class RatesService {
     return this.http.get(`${this.API_BASE}/currencies/`);
   }
 
-  getSummary(period: 'year' | 'quarter' | 'month' | 'day'): Observable<any> {
-    return this.http.get(`${this.API_BASE}/rates/summary/`, { params: { period } });
+  getSummary(period: 'year' | 'quarter' | 'month' | 'day', dateFrom?: string, dateTo?: string): Observable<any> {
+    const params: any = { period };
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    return this.http.get(`${this.API_BASE}/rates/summary/`, { params });
   }
 
   fetch(date?: string): Observable<any> {

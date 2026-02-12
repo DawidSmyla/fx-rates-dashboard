@@ -19,12 +19,13 @@
 }
 
 .container {
-  min-height: 100vh;
+  min-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 36px 24px 60px;
+  padding: 24px 24px 24px;
   text-align: center;
+  overflow: hidden;
 }
 
 h1, h2, h3 {
@@ -57,6 +58,11 @@ h1, h2, h3 {
 
 .date-range input[type="date"] {
   width: 180px;
+  padding: 12px 14px;
+  font-size: 15px;
+  background: #2a2a2a;
+  color: #f5f5f5;
+  border: 1px solid #444;
 }
 
 label {
@@ -80,6 +86,22 @@ select {
   margin: 0 auto;
   text-align: center;
   box-sizing: border-box;
+}
+
+select {
+  font-size: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' fill='none' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+select option {
+  padding: 14px 16px;
+  font-size: 16px;
+  text-align: center;
+  line-height: 2.2;
 }
 
 .filter-controls input[type="text"] {
@@ -238,6 +260,7 @@ td {
   color: #f5f5f5;
   font-size: 14px;
   box-sizing: border-box;
+  margin: 0;
 }
 
 .dropdown-item {

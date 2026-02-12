@@ -1,29 +1,27 @@
 <div class="container">
   <h1>{{ title }}</h1>
 
-  <!-- ========== WYBÓR ZAKRESU DAT ========== -->
   <div class="controls">
     <div class="date-range">
       <label>
         Data od:
-        <input type="date" [(ngModel)]="dateFrom">
+        <input type="date" [(ngModel)]="dateFrom" (ngModelChange)="onDateChange()">
       </label>
       <label>
         Data do:
-        <input type="date" [(ngModel)]="dateTo">
+        <input type="date" [(ngModel)]="dateTo" (ngModelChange)="onDateChange()">
       </label>
     </div>
 
     <button (click)="fetchFromNbp()" [disabled]="loading">Pobierz kursy z NBP</button>
     <button (click)="loadLatest()" [disabled]="loading">Pokaż najnowsze kursy</button>
-    <button (click)="loadByDateRange()" [disabled]="loading">Pokaż kursy dla wybranego zakresu</button>
+    <button (click)="loadByDateRange()" [disabled]="loading">Pokaż kursy dla wybranego zakresu dat</button>
   </div>
 
-  <!-- ========== FILTROWANIE WG OKRESU (PODSUMOWANIE) ========== -->
   <div class="summary-controls">
     <label>
       Okres:
-      <select [(ngModel)]="summaryPeriod">
+      <select [(ngModel)]="summaryPeriod" (ngModelChange)="onPeriodChange()">
         <option value="year">rok</option>
         <option value="quarter">kwartał</option>
         <option value="month">miesiąc</option>
@@ -36,9 +34,8 @@
     </button>
   </div>
 
-  <!-- ========== FILTROWANIE PO KODZIE WALUTY ========== -->
   <div class="filter-controls" *ngIf="latestData || rangeData || summaryData">
-    <label>Filtruj po kodzie waluty:</label>
+    <label>Filtruj waluty:</label>
     <div class="dropdown-wrapper">
       <div class="dropdown-trigger" (click)="toggleDropdown()">
         <span class="dropdown-text">{{ filterDisplayText }}</span>
@@ -49,7 +46,7 @@
           <input
             type="text"
             [(ngModel)]="searchQuery"
-            placeholder="Szukaj waluty..."
+            placeholder="Szukaj waluty"
             (click)="$event.stopPropagation()">
         </div>
         <div class="dropdown-items">
@@ -74,12 +71,11 @@
   </div>
 
   <div class="message" *ngIf="message">{{ message }}</div>
-  
+
   <div class="spinner" *ngIf="loading">
     <p>Ładowanie danych...</p>
   </div>
 
-  <!-- ========== TABELA: JEDNA DATA (latestData) ========== -->
   <div class="latest" *ngIf="latestData">
     <h2>Kursy ({{ latestData.date }})</h2>
     <table>
@@ -99,7 +95,6 @@
     </p>
   </div>
 
-  <!-- ========== TABELA: ZAKRES DAT (rangeData) ========== -->
   <div class="range" *ngIf="rangeData">
     <h2>Kursy od {{ rangeData.date_from }} do {{ rangeData.date_to }}</h2>
     <div *ngFor="let dateKey of rangeDateKeys" class="range-day">
@@ -122,7 +117,6 @@
     </div>
   </div>
 
-  <!-- ========== TABELA: PODSUMOWANIE (summaryData) ========== -->
   <div class="summary" *ngIf="summaryData && !showChart">
     <h2>{{ summaryTitle }}</h2>
     <div *ngFor="let row of summaryData.data | keyvalue">
@@ -145,7 +139,6 @@
     </div>
   </div>
 
-  <!-- ========== WYKRES: PODSUMOWANIE ========== -->
   <div class="chart-container" *ngIf="summaryData && showChart">
     <h2>{{ summaryTitle }}</h2>
     <div class="chart-wrapper">
