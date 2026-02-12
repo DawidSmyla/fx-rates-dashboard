@@ -285,7 +285,9 @@ All tests pass successfully:
 
 5. Multi-select dropdown with search <img width="1915" height="967" alt="image" src="https://github.com/user-attachments/assets/c776ff8d-bd62-43d3-a2ab-3ad62b2cbf4a" />
 
-6. Docker containers running <img width="1350" height="1369" alt="image" src="https://github.com/user-attachments/assets/bb027500-1273-46d1-85be-0ce6cf48eb47" />
+6. Docker containers running <img width="1658" height="140" alt="image" src="https://github.com/user-attachments/assets/a4d51887-d860-4f44-93bc-0b05cf2be1f0" />
+
+
 
 
 
