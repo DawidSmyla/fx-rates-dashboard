@@ -287,8 +287,25 @@ def rates_summary(request):
     }
     trunc_expr = trunc_map[period]
 
+    qs = ExchangeRate.objects.all()
+
+    date_from_str = request.GET.get("date_from")
+    date_to_str = request.GET.get("date_to")
+    if date_from_str:
+        try:
+            date_from = datetime.strptime(date_from_str, "%Y-%m-%d").date()
+            qs = qs.filter(effective_date__gte=date_from)
+        except ValueError:
+            pass
+    if date_to_str:
+        try:
+            date_to = datetime.strptime(date_to_str, "%Y-%m-%d").date()
+            qs = qs.filter(effective_date__lte=date_to)
+        except ValueError:
+            pass
+
     agg = (
-        ExchangeRate.objects
+        qs
         .annotate(period=trunc_expr)
         .values("period", "code", "currency")
         .order_by("period", "code")
