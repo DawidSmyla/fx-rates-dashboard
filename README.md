@@ -76,14 +76,14 @@ The application runs in Docker containers and can be started with a single `dock
 
 ### Data Fetching
 
-- **Fetch rates from NBP** – fetches exchange rates from the NBP API for a selected date, date range, or the latest available data, and saves them to the database
+- **Fetch rates from NBP (Pobierz kursy z NBP)** – fetches exchange rates from the NBP API for a selected date, date range, or the latest available data, and saves them to the database
 - **Bulk fetching** – for date ranges, the app iterates over each day and fetches data from NBP (skipping weekends/holidays when API returns 404)
 
 ### Data Display
 
-- **Show latest rates** – displays the most recent rates from the database
-- **Show rates for selected range** – displays rates grouped by date for the selected date range
-- **Show summary** – displays average rates grouped by selected period:
+- **Show latest rates (Pokaż najnowsze kursy)** – displays the most recent rates from the database
+- **Show rates for selected range (Pokaż kursy z wybranego zakresu dat)** – displays rates grouped by date for the selected date range
+- **Show summary (Pokaż podsumowanie)** – displays average rates grouped by selected period:
   - **Year** – header e.g. "2024"
   - **Quarter** – header e.g. "2024 Q2"
   - **Month** – header e.g. "2024-01"
@@ -93,12 +93,11 @@ The application runs in Docker containers and can be started with a single `dock
 
 - Multi-select dropdown with checkboxes
 - Search by currency code (e.g. "USD") or name (e.g. "dolar")
-- "Clear selection" button at the bottom of the expanded list
-- List closes when clicking outside
+- "Clear selection" button at the bottom of the expanded list, visible only when at least one currency is selected
 
 ### Chart
 
-- "Show chart" / "Show table" button toggles between table and line chart views
+- "Show chart" / "Show table" ("Pokaż wykres" / "Pokaż tabelę") button toggles between table and line chart views
 - Line chart (Chart.js) with a separate line for each currency
 - Random colors for each currency, legend below the chart
 - Chart respects currency filter and date range
