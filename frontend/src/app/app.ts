@@ -21,6 +21,8 @@ export class AppComponent {
   searchQuery = '';
   selectedCurrencies: string[] = [];
   dropdownOpen = false;
+  showChart = false;
+  chartColors: Record<string, string> = {};
   loading = false;
   message = '';
 
@@ -95,6 +97,93 @@ export class AppComponent {
   toggleDropdown() {
     this.loadCurrencies();
     this.dropdownOpen = !this.dropdownOpen;
+  }
+
+    toggleChart() {
+    this.showChart = !this.showChart;
+    if (this.showChart) {
+      setTimeout(() => this.renderChart(), 100);
+    }
+  }
+
+  private getColorForCode(code: string): string {
+    if (!this.chartColors[code]) {
+      const r = Math.floor(Math.random() * 180 + 50);
+      const g = Math.floor(Math.random() * 180 + 50);
+      const b = Math.floor(Math.random() * 180 + 50);
+      this.chartColors[code] = `rgb(${r}, ${g}, ${b})`;
+    }
+    return this.chartColors[code];
+  }
+
+  private renderChart() {
+    const canvas = document.getElementById('summaryChart') as HTMLCanvasElement;
+    if (!canvas || !this.summaryData) return;
+
+    const existingChart = (window as any).__fxChart;
+    if (existingChart) existingChart.destroy();
+
+    const labels = Object.keys(this.summaryData.data).sort();
+    const formattedLabels = labels.map((l: string) => this.formatPeriodKey(l));
+
+    const allCodes = new Set<string>();
+    for (const key of labels) {
+      for (const r of this.summaryData.data[key]) {
+        allCodes.add(r.code);
+      }
+    }
+
+    const codesToShow = this.selectedCurrencies.length > 0
+      ? [...allCodes].filter(c => this.selectedCurrencies.includes(c))
+      : [...allCodes];
+
+    const Chart = (window as any).Chart;
+    if (!Chart) return;
+
+    const datasets = codesToShow.sort().map(code => {
+      const color = this.getColorForCode(code);
+      const data = labels.map(label => {
+        const entry = this.summaryData.data[label]?.find((r: any) => r.code === code);
+        return entry ? parseFloat(entry.rate) : null;
+      });
+      return {
+        label: code,
+        data,
+        borderColor: color,
+        backgroundColor: color,
+        fill: false,
+        tension: 0.3,
+        pointRadius: 3,
+        borderWidth: 2,
+      };
+    });
+
+    (window as any).__fxChart = new Chart(canvas, {
+      type: 'line',
+      data: { labels: formattedLabels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom' as const,
+            labels: { color: '#f5f5f5', font: { size: 12 }, padding: 16 },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#aaa', maxRotation: 45 },
+            grid: { color: '#333' },
+          },
+          y: {
+            ticks: { color: '#aaa' },
+            grid: { color: '#333' },
+          },
+        },
+      },
+    });
+
+    this.cdr.detectChanges();
   }
 
   @HostListener('document:click', ['$event'])

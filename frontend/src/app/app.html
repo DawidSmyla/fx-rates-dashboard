@@ -31,6 +31,9 @@
       </select>
     </label>
     <button (click)="loadSummary()" [disabled]="loading">Pokaż podsumowanie</button>
+    <button (click)="toggleChart()" [disabled]="!summaryData" [class.active-toggle]="showChart">
+      {{ showChart ? 'Pokaż tabelę' : 'Pokaż wykres' }}
+    </button>
   </div>
 
   <!-- ========== FILTROWANIE PO KODZIE WALUTY ========== -->
@@ -70,10 +73,8 @@
     </div>
   </div>
 
-  <!-- ========== KOMUNIKATY ========== -->
   <div class="message" *ngIf="message">{{ message }}</div>
-
-  <!-- ========== SPINNER ========== -->
+  
   <div class="spinner" *ngIf="loading">
     <p>Ładowanie danych...</p>
   </div>
@@ -122,7 +123,7 @@
   </div>
 
   <!-- ========== TABELA: PODSUMOWANIE (summaryData) ========== -->
-  <div class="summary" *ngIf="summaryData">
+  <div class="summary" *ngIf="summaryData && !showChart">
     <h2>{{ summaryTitle }}</h2>
     <div *ngFor="let row of summaryData.data | keyvalue">
       <h3>{{ formatPeriodKey(row.key.toString()) }}</h3>
@@ -139,8 +140,16 @@
         </tbody>
       </table>
       <p class="no-results" *ngIf="filterRates(row.value).length === 0">
-        Brak wyników dla wybranych walut"
+        Brak wyników dla wybranych walut
       </p>
+    </div>
+  </div>
+
+  <!-- ========== WYKRES: PODSUMOWANIE ========== -->
+  <div class="chart-container" *ngIf="summaryData && showChart">
+    <h2>{{ summaryTitle }}</h2>
+    <div class="chart-wrapper">
+      <canvas id="summaryChart"></canvas>
     </div>
   </div>
 </div>
